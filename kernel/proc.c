@@ -130,6 +130,19 @@ found:
   return p;
 }
 
+uint64 get_freeproc(void){
+  struct proc *p;
+  uint cnt = 0;
+  for(p = proc; p < &proc[NPROC]; p++) {
+    acquire(&p->lock);
+    if(p->state != UNUSED) {
+      cnt++;
+    }
+    release(&p->lock);
+  }
+  return cnt;
+}
+
 // free a proc structure and the data hanging from it,
 // including user pages.
 // p->lock must be held.
@@ -150,6 +163,8 @@ freeproc(struct proc *p)
   p->killed = 0;
   p->xstate = 0;
   p->state = UNUSED;
+  //lab2-1
+  p->trace_mask = 0;
 }
 
 // Create a user page table for a given process,
@@ -282,6 +297,9 @@ fork(void)
 
   // Cause fork to return 0 in the child.
   np->trapframe->a0 = 0;
+
+  //lab2-1
+  np->trace_mask = p->trace_mask;
 
   // increment reference counts on open file descriptors.
   for(i = 0; i < NOFILE; i++)
